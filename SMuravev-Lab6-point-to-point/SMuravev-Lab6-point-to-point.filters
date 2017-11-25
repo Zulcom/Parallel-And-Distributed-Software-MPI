@@ -15,7 +15,7 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="SMuravev-Lab6.cpp">
+    <ClCompile Include="SMuravev-Lab5.cpp">
       <Filter>Исходные файлы</Filter>
     </ClCompile>
   </ItemGroup>

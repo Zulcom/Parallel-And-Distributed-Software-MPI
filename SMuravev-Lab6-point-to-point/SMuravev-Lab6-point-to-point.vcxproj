@@ -20,7 +20,7 @@
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>15.0</VCProjectVersion>
-    <ProjectGuid>{85EF5FDC-D855-4FF9-B37F-5F293DF458BD}</ProjectGuid>
+    <ProjectGuid>{A2BD74BE-332C-4FA7-AEFF-D2932FF05C7B}</ProjectGuid>
     <RootNamespace>MPI</RootNamespace>
     <WindowsTargetPlatformVersion>10.0.16299.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
@@ -128,7 +128,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="SMuravev-Lab6.cpp" />
+    <ClCompile Include="SMuravev-Lab6-point-to-point.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
