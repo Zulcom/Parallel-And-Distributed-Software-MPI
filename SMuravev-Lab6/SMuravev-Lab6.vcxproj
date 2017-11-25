@@ -20,7 +20,7 @@
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>15.0</VCProjectVersion>
-    <ProjectGuid>{1334C155-8601-49AB-BE93-74D4F9532392}</ProjectGuid>
+    <ProjectGuid>{85EF5FDC-D855-4FF9-B37F-5F293DF458BD}</ProjectGuid>
     <RootNamespace>MPI</RootNamespace>
     <WindowsTargetPlatformVersion>10.0.16299.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
@@ -90,15 +90,7 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>$(MSMPI_INC)\x64;$(MSMPI_INC);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <AdditionalUsingDirectories>$(MSMPI_INC);$(MSMPI_INC)\x64;%(AdditionalUsingDirectories)</AdditionalUsingDirectories>
     </ClCompile>
-    <Link>
-      <AdditionalLibraryDirectories> $(MSMPI_LIB64)</AdditionalLibraryDirectories>
-    </Link>
-    <Link>
-      <AdditionalDependencies>msmpi.lib;%(AdditionalDependencies)</AdditionalDependencies>
-    </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
@@ -128,7 +120,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="AVertyankin-Lab6-group.cpp" />
+    <ClCompile Include="SMuravev-Lab6.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

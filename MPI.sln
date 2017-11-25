@@ -13,6 +13,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "AVertyankin-Lab6", "AVertya
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "AVertyankin-Lab6-group", "AVertyankin-Lab6-group\AVertyankin-Lab6-group.vcxproj", "{1334C155-8601-49AB-BE93-74D4F9532392}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SMuravev-Lab6", "SMuravev-Lab6\SMuravev-Lab6.vcxproj", "{85EF5FDC-D855-4FF9-B37F-5F293DF458BD}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -61,6 +63,14 @@ Global
 		{1334C155-8601-49AB-BE93-74D4F9532392}.Release|x64.Build.0 = Release|x64
 		{1334C155-8601-49AB-BE93-74D4F9532392}.Release|x86.ActiveCfg = Release|Win32
 		{1334C155-8601-49AB-BE93-74D4F9532392}.Release|x86.Build.0 = Release|Win32
+		{85EF5FDC-D855-4FF9-B37F-5F293DF458BD}.Debug|x64.ActiveCfg = Debug|x64
+		{85EF5FDC-D855-4FF9-B37F-5F293DF458BD}.Debug|x64.Build.0 = Debug|x64
+		{85EF5FDC-D855-4FF9-B37F-5F293DF458BD}.Debug|x86.ActiveCfg = Debug|Win32
+		{85EF5FDC-D855-4FF9-B37F-5F293DF458BD}.Debug|x86.Build.0 = Debug|Win32
+		{85EF5FDC-D855-4FF9-B37F-5F293DF458BD}.Release|x64.ActiveCfg = Release|x64
+		{85EF5FDC-D855-4FF9-B37F-5F293DF458BD}.Release|x64.Build.0 = Release|x64
+		{85EF5FDC-D855-4FF9-B37F-5F293DF458BD}.Release|x86.ActiveCfg = Release|Win32
+		{85EF5FDC-D855-4FF9-B37F-5F293DF458BD}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
