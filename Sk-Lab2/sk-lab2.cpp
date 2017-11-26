@@ -1,8 +1,7 @@
 ﻿#include <algorithm> // место жительства swap()
 #include <iostream> // будем использовать потоковый ввод-вывод
 #include <vector> // матрицы оформим как векторы
-#include "omp.h" // используем openMP
-//#include <mpi.h> // используем MPI
+#include <mpi.h> // используем MPI
 #include <ctime>
 
 using namespace std; // чтобы не дописывать пространство имён к векторам, свопам и консоли
@@ -58,7 +57,15 @@ int det(int* mat, int n)
 		// terms are to be added with alternate sign
 		sign = -sign;
 	}
-
+	for (int i = 0; i < n; i++)
+	{
+		for (int j = 0; j < n; j++)
+		{
+			cout << temp[i*n + j] << " ";
+		}
+		cout << endl;
+	}
+	delete[] temp;
 	return D;
 }
 
@@ -66,15 +73,67 @@ int det(int* mat, int n)
 int main(int argc, char* argv[]) // точка входа
 {
 	srand(time(0));
-	int ProcNum, ProcRank;
-	int n = 2;
+	int size, num_proc;
+	MPI_Status status;
+	MPI_Init(&argc, &argv);
+	MPI_Comm_size(MPI_COMM_WORLD, &size);
+	MPI_Comm_rank(MPI_COMM_WORLD, &num_proc);
+	int n = 3;
 	int mainDet = 0;
 	int* matrix = new int[n * n];// матрица целочисленная на указателях (N*cстрока) + столбец
-	for (int i = 0; i < n * n; ++i) // заполнение массива 
-		matrix[i] = rand() % 100; // заполяем элемент M_ij случайным числом меньшим 10
-	mainDet = det(matrix, n);
-	cout << endl;
-	cout << mainDet;
-	system("pause.exe");
+	int * column = new int[n];
+	if (0 == num_proc) {
+		
+		int temparr[9] = { 37, 95, 49, 48, 0, 26, 3, 61, 86 };
+		for (int i = 0; i < n * n; ++i) // заполнение массива 
+			matrix[i] = temparr[i];//rand() % 100; // заполяем элемент M_ij случайным числом меньшим 10
+		
+		mainDet = det(matrix, n);
+		cout << "Main det: " << det(matrix, n) << endl;
+		for (int i = 0; i < n; i++) {
+			column[i] = rand() % 10;
+		}
+		MPI_Bcast(column, n, MPI_INT, 0, MPI_COMM_WORLD);
+		MPI_Bcast(matrix, n*n, MPI_INT, 0, MPI_COMM_WORLD);
+		for (int i = 1; i < size; ++i) {
+			int currCol = i - 1;
+			MPI_Send(&currCol, 1, MPI_INT, i, 0, MPI_COMM_WORLD);
+		}
+		int *solution = new int[n];
+		for (int i = 1; i < size; ++i) {
+			int tempAnsw;
+			MPI_Recv(&tempAnsw, 1, MPI_INT, i, MPI_ANY_TAG, MPI_COMM_WORLD, &status);
+			solution[status.MPI_TAG] = tempAnsw/mainDet;
+		}
+	/*	for (int i = 0; i < n; i++)
+		{
+			for (int j = 0; j < n; j++)
+			{
+				cout << matrix[i*n + j] << " ";
+			}
+			cout << column[i] << endl;
+		}
+		for (int i = 0; i < n; i++)
+		{
+			cout << solution[i] << " ";
+		}*/
+		
+	}
+	else
+	{
+		MPI_Bcast(column, n, MPI_INT, 0, MPI_COMM_WORLD);
+		MPI_Bcast(matrix, n*n, MPI_INT, 0, MPI_COMM_WORLD);
+		int myCol;
+		MPI_Recv(&myCol, 1, MPI_INT, 0, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+		for (int i = 0; i < n; i++)
+		{
+			matrix[n*i + myCol] = column[i];
+		}
+		int thisDet = det(matrix, n);
+	    MPI_Send(&thisDet, 1, MPI_INT, 0, myCol, MPI_COMM_WORLD);
+	}
+	delete[] matrix;
+	delete[] column;
+	MPI_Finalize();
 	return 0;
 }
