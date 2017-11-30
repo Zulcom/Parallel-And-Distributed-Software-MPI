@@ -130,6 +130,11 @@
   <ItemGroup>
     <ClCompile Include="SMuravev-Lab6.cpp" />
   </ItemGroup>
+  <ItemGroup>
+    <Text Include="..\x64\Debug\alice.txt" />
+    <Text Include="..\x64\Debug\crime.txt" />
+    <Text Include="..\x64\Debug\war.txt" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
