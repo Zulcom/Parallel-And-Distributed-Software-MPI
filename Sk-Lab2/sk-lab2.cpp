@@ -8,7 +8,7 @@ using namespace std; // чтобы не дописывать пространс�
 
 // Function to get cofactor(это матрица, которую мы можем получить, удалив строку и столбец этого элемента из этой матрицы.) of mat[p][q] in temp[][]. n is current
 // dimension of mat[][]
-void getCofactor(int* mat, int* temp, int p, int q, int n)
+void getCofactor(double* mat, double* temp, int p, int q, int n)
 {
 	int i = 0, j = 0;
 
@@ -35,7 +35,7 @@ void getCofactor(int* mat, int* temp, int p, int q, int n)
 
 /* Recursive function for finding determinant of matrix.
 n is current dimension of mat[][]. */
-int det(int* mat, int n)
+int det(double* mat, int n)
 {
 	int D = 0; // Initialize result
 
@@ -43,7 +43,7 @@ int det(int* mat, int n)
 	if (n == 1)
 		return mat[0];
 
-	int* temp = new int[n * n]; // To store cofactors
+	double* temp = new double[n * n]; // To store cofactors
 
 	int sign = 1; // To store sign multiplier
 
@@ -78,31 +78,31 @@ int main(int argc, char* argv[]) // точка входа
 	MPI_Init(&argc, &argv);
 	MPI_Comm_size(MPI_COMM_WORLD, &size);
 	MPI_Comm_rank(MPI_COMM_WORLD, &num_proc);
-	int n = 3;
-	int mainDet = 0;
-	int* matrix = new int[n * n];// матрица целочисленная на указателях (N*cстрока) + столбец
-	int * column = new int[n];
+	const unsigned int n = 3;
+	double mainDet = 0;
+	double* matrix = new double[n * n];// матрица целочисленная на указателях (N*cстрока) + столбец
+	double * column = new double[n];
 	if (0 == num_proc) {
 		
-		int temparr[9] = { 37, 95, 49, 48, 0, 26, 3, 61, 86 };
+		double temparr[9] = { 37, 95, 49, 48, 0, 26, 3, 61, 86 };
 		for (int i = 0; i < n * n; ++i) // заполнение массива 
-			matrix[i] = temparr[i];//rand() % 100; // заполяем элемент M_ij случайным числом меньшим 10
+			matrix[i] = temparr[i]; //rand() % 100; // заполяем элемент M_ij случайным числом меньшим 10
 		
 		mainDet = det(matrix, n);
 		cout << "Main det: " << det(matrix, n) << endl;
 		for (int i = 0; i < n; i++) {
 			column[i] = rand() % 10;
 		}
-		MPI_Bcast(column, n, MPI_INT, 0, MPI_COMM_WORLD);
-		MPI_Bcast(matrix, n*n, MPI_INT, 0, MPI_COMM_WORLD);
+		MPI_Bcast(column, n, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+		MPI_Bcast(matrix, n*n, MPI_DOUBLE, 0, MPI_COMM_WORLD);
 		for (int i = 1; i < size; ++i) {
 			int currCol = i - 1;
 			MPI_Send(&currCol, 1, MPI_INT, i, 0, MPI_COMM_WORLD);
 		}
-		int *solution = new int[n];
+		double *solution = new double[n];
 		for (int i = 1; i < size; ++i) {
-			int tempAnsw;
-			MPI_Recv(&tempAnsw, 1, MPI_INT, i, MPI_ANY_TAG, MPI_COMM_WORLD, &status);
+			double tempAnsw;
+			MPI_Recv(&tempAnsw, 1, MPI_DOUBLE, i, MPI_ANY_TAG, MPI_COMM_WORLD, &status);
 			solution[status.MPI_TAG] = tempAnsw/mainDet;
 		}
 	/*	for (int i = 0; i < n; i++)
@@ -117,20 +117,20 @@ int main(int argc, char* argv[]) // точка входа
 		{
 			cout << solution[i] << " ";
 		}*/
-		
+		delete[] solution;
 	}
 	else
 	{
-		MPI_Bcast(column, n, MPI_INT, 0, MPI_COMM_WORLD);
-		MPI_Bcast(matrix, n*n, MPI_INT, 0, MPI_COMM_WORLD);
+		MPI_Bcast(column, n, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+		MPI_Bcast(matrix, n*n, MPI_DOUBLE, 0, MPI_COMM_WORLD);
 		int myCol;
 		MPI_Recv(&myCol, 1, MPI_INT, 0, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 		for (int i = 0; i < n; i++)
 		{
 			matrix[n*i + myCol] = column[i];
 		}
-		int thisDet = det(matrix, n);
-	    MPI_Send(&thisDet, 1, MPI_INT, 0, myCol, MPI_COMM_WORLD);
+		double thisDet = det(matrix, n);
+	    MPI_Send(&thisDet, 1, MPI_DOUBLE, 0, myCol, MPI_COMM_WORLD);
 	}
 	delete[] matrix;
 	delete[] column;
