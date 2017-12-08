@@ -4,133 +4,164 @@
 #include <mpi.h> // используем MPI
 #include <ctime>
 
+
+//(N*cстрока) + столбец
 using namespace std; // чтобы не дописывать пространство имён к векторам, свопам и консоли
 
-// Function to get cofactor(это матрица, которую мы можем получить, удалив строку и столбец этого элемента из этой матрицы.) of mat[p][q] in temp[][]. n is current
-// dimension of mat[][]
-void getCofactor(double* mat, double* temp, int p, int q, int n)
+/**
+ *  
+ * Поиск номера сроки, имеющий максимальный по модулю элемент matrix[искомое][i]
+ */
+template <typename T>
+int col_max(T* matrix, int col, int n)
 {
-	int i = 0, j = 0;
-
-	// Looping for each element of the matrix
-	for (int row = 0; row < n; row++)
-
-		for (int col = 0; col < n; col++)
-
-			//  Copying into temporary matrix only those element
-			//  which are not in given row and column
-			if (row != p && col != q)
-			{
-				temp[i * n + (j++)] = mat[row * n + col];
-
-				// Row is filled, so increase row index and
-				// reset col index
-				if (j == n - 1)
-				{
-					j = 0;
-					i++;
-				}
-			}
-}
-
-/* Recursive function for finding determinant of matrix.
-n is current dimension of mat[][]. */
-int det(double* mat, int n)
-{
-	int D = 0; // Initialize result
-
-	//  Base case : if matrix contains single element
-	if (n == 1)
-		return mat[0];
-
-	double* temp = new double[n * n]; // To store cofactors
-
-	int sign = 1; // To store sign multiplier
-
-	// Iterate for each element of first row
-	for (int i = 0; i < n; i++)
+	T max = abs(matrix[col * n + col]);
+	T maxPos = col;
+#pragma omp parallel
 	{
-		// Getting Cofactor of mat[0][f]
-		getCofactor(mat, temp, 0, i, n);
-		D += sign * mat[i] * det(temp, n - 1);
-
-		// terms are to be added with alternate sign
-		sign = -sign;
-	}
-	for (int i = 0; i < n; i++)
-	{
-		for (int j = 0; j < n; j++)
+		T loc_max = max;
+		T loc_max_pos = maxPos;
+#pragma omp for
+		for (int i = 0; i < n; ++i)
 		{
-			cout << temp[i*n + j] << " ";
+			T element = abs(matrix[i * n + col]);
+			if (element > loc_max)
+			{
+				loc_max = element;
+				loc_max_pos = i;
+			}
 		}
-		cout << endl;
+#pragma omp critical
+		{
+			if (max < loc_max)
+			{
+				max = loc_max;
+				maxPos = loc_max_pos;
+			}
+		}
 	}
-	delete[] temp;
-	return D;
+	return maxPos;
 }
 
+template <typename T>
+unsigned int triangulation(T* matrix, int n)
+{
+	unsigned int swapCount = 0;
+	for (int i = 0; i < n - 1; ++i)
+	{
+		if (0 == matrix[i * n + i])
+		{
+			unsigned int imax = col_max(matrix, i, n);
+			if (i != imax)
+			{
+				for (int j = 0; j < n; ++j)//(N*cстрока) + столбец
+				{
+					swap(matrix[n * i + j], matrix[n * imax + j]);
+				}
+				//swap(matrix[i], matrix[imax]);
+				++swapCount;
+			}
+		}
+#pragma omp parallel for
+		for (int j = i + 1; j < n; ++j)
+		{
+			T mul = matrix[j * n + i] / matrix[i * n + i];
+			for (int k = i; k < n; ++k)
+				matrix[j * n + k] -= matrix[i * n + k] * mul;
+		}
+	}
+	return swapCount;
+}
+
+/* Поиск определителя методом Гаусса
+ * vector<vector<T> > &matrix матрица для поиска
+ * int n её размерность
+ * Возвращает определитель
+ */
+template <typename T>// шаблон функции, реальная будет создана на этапе компиляции и масимально оптимизированна
+T gauss_determinant(T* matrix, int n)
+{
+	unsigned int swapCount = triangulation(matrix, n); // ищем количество перестановок строк и делаем триангуляцию матрицы
+	T determinanit = 1; // объявляем определитель как 1, на случай если перестановок не будет
+	if (swapCount % 2 == 1) // если количество перестановок нечётное...
+		determinanit = -1;
+	// ..очевидно, что определитель будет отрицательный, поскольку при каждой перестановке он меняет знак
+	for (int i = 0; i < n; ++i)
+		// не параллелим этот цикл поскольку на быстродействии это не скажется - только память копиями забьём
+	{
+		determinanit *= matrix[n * i + i]; // считаем произведение элементов на главной диагонали
+	}
+	return determinanit; // возвращаем их
+}
 
 int main(int argc, char* argv[]) // точка входа
 {
 	srand(time(0));
-	int size, num_proc;
+	int size, num_proc = 0;
 	MPI_Status status;
 	MPI_Init(&argc, &argv);
 	MPI_Comm_size(MPI_COMM_WORLD, &size);
 	MPI_Comm_rank(MPI_COMM_WORLD, &num_proc);
 	const unsigned int n = 3;
-	double mainDet = 0;
+	double mainDet;
 	double* matrix = new double[n * n];// матрица целочисленная на указателях (N*cстрока) + столбец
-	double * column = new double[n];
-	if (0 == num_proc) {
-		
-		double temparr[9] = { 37, 95, 49, 48, 0, 26, 3, 61, 86 };
+	double* column = new double[n];
+	if (0 == num_proc)
+	{
+		double temparr[9] = {1, 55, 3, 0, 3, 3 , 2, 1, 3};
 		for (int i = 0; i < n * n; ++i) // заполнение массива 
 			matrix[i] = temparr[i]; //rand() % 100; // заполяем элемент M_ij случайным числом меньшим 10
-		
-		mainDet = det(matrix, n);
-		cout << "Main det: " << det(matrix, n) << endl;
-		for (int i = 0; i < n; i++) {
+		double * tempMatrix = new double[n*n];
+		for (int i = 0; i < n*n; i++)
+				tempMatrix[i] = matrix[i];
+		mainDet = gauss_determinant(tempMatrix, n);
+		delete[] tempMatrix;
+		   if (abs(mainDet) < 0.0001) MPI_Abort(MPI_COMM_WORLD, 1);
+		for (int i = 0; i < n; i++)
 			column[i] = rand() % 10;
-		}
 		MPI_Bcast(column, n, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-		MPI_Bcast(matrix, n*n, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-		for (int i = 1; i < size; ++i) {
-			int currCol = i - 1;
-			MPI_Send(&currCol, 1, MPI_INT, i, 0, MPI_COMM_WORLD);
+		MPI_Bcast(matrix, n * n, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+		double* solution = new double[n];
+		for (int i = 0; i < n; ++i)
+		{
+			double tempAnsw;	
+			MPI_Recv(&tempAnsw, 1, MPI_DOUBLE, MPI_ANY_SOURCE, i, MPI_COMM_WORLD, &status);
+			solution[status.MPI_TAG] = tempAnsw / mainDet;
 		}
-		double *solution = new double[n];
-		for (int i = 1; i < size; ++i) {
-			double tempAnsw;
-			MPI_Recv(&tempAnsw, 1, MPI_DOUBLE, i, MPI_ANY_TAG, MPI_COMM_WORLD, &status);
-			solution[status.MPI_TAG] = tempAnsw/mainDet;
-		}
-	/*	for (int i = 0; i < n; i++)
+
+		for (int i = 0; i < n; i++)
 		{
 			for (int j = 0; j < n; j++)
 			{
-				cout << matrix[i*n + j] << " ";
+				cout << matrix[i * n + j] << " ";
 			}
 			cout << column[i] << endl;
 		}
 		for (int i = 0; i < n; i++)
 		{
 			cout << solution[i] << " ";
-		}*/
+		}
+
 		delete[] solution;
 	}
 	else
 	{
 		MPI_Bcast(column, n, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-		MPI_Bcast(matrix, n*n, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-		int myCol;
-		MPI_Recv(&myCol, 1, MPI_INT, 0, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-		for (int i = 0; i < n; i++)
-		{
-			matrix[n*i + myCol] = column[i];
+		MPI_Bcast(matrix, n * n, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+		double * tempMatrix = new double[n*n];
+		int m = ceil(n / static_cast<double>(size));
+		int begin = num_proc == 1 ? 0 : m*num_proc-1;
+		int end = begin + m > n ? n : begin + m;
+		cout << m << ": "<< num_proc << " from " << begin << " to " << end<<endl;
+		for(int thisCol = begin;thisCol<end;++thisCol){
+			for (int j = 0; j < n*n; j++) tempMatrix[j] = matrix[j];
+			for (int i = 0; i < n; i++){
+				tempMatrix[n * i + thisCol] = column[i];
+			}
+			double thisDet = gauss_determinant(tempMatrix, n);
+			MPI_Send(&thisDet, 1, MPI_DOUBLE, 0, thisCol, MPI_COMM_WORLD);
 		}
-		double thisDet = det(matrix, n);
-	    MPI_Send(&thisDet, 1, MPI_DOUBLE, 0, myCol, MPI_COMM_WORLD);
+	
 	}
 	delete[] matrix;
 	delete[] column;
