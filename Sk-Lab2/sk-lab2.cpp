@@ -1,9 +1,11 @@
-﻿#include <algorithm> // место жительства swap()
+﻿#pragma once
+#define _CRT_SECURE_NO_WARNINGS 1 
+#define _WINSOCK_DEPRECATED_NO_WARNINGS 1
+#include <algorithm> // место жительства swap()
 #include <iostream> // будем использовать потоковый ввод-вывод
 #include <vector> // матрицы оформим как векторы
 #include <mpi.h> // используем MPI
 #include <ctime>
-
 
 //(N*cстрока) + столбец
 using namespace std; // чтобы не дописывать пространство имён к векторам, свопам и консоли
@@ -102,15 +104,17 @@ int main(int argc, char* argv[]) // точка входа
 	MPI_Init(&argc, &argv);
 	MPI_Comm_size(MPI_COMM_WORLD, &size);
 	MPI_Comm_rank(MPI_COMM_WORLD, &num_proc);
-	const unsigned int n = 3;
+	FILE* f = fopen("test.txt","w+");
+for (int inj = 1; inj < 10; ++inj) {	
+	const unsigned int n = inj;
 	double mainDet;
 	double* matrix = new double[n * n];// матрица целочисленная на указателях (N*cстрока) + столбец
 	double* column = new double[n];
 	if (0 == num_proc)
-	{
-		double temparr[9] = {1, 55, 3, 0, 3, 3 , 2, 1, 3};
+	{	
+		double start_time = MPI_Wtime();
 		for (int i = 0; i < n * n; ++i) // заполнение массива 
-			matrix[i] = temparr[i]; //rand() % 100; // заполяем элемент M_ij случайным числом меньшим 10
+			matrix[i] = rand() % 100; // заполяем элемент M_ij случайным числом меньшим 10
 		double * tempMatrix = new double[n*n];
 		for (int i = 0; i < n*n; i++)
 				tempMatrix[i] = matrix[i];
@@ -119,29 +123,19 @@ int main(int argc, char* argv[]) // точка входа
 		   if (abs(mainDet) < 0.0001) MPI_Abort(MPI_COMM_WORLD, 1);
 		for (int i = 0; i < n; i++)
 			column[i] = rand() % 10;
+	
 		MPI_Bcast(column, n, MPI_DOUBLE, 0, MPI_COMM_WORLD);
 		MPI_Bcast(matrix, n * n, MPI_DOUBLE, 0, MPI_COMM_WORLD);
 		double* solution = new double[n];
+	
 		for (int i = 0; i < n; ++i)
 		{
 			double tempAnsw;	
 			MPI_Recv(&tempAnsw, 1, MPI_DOUBLE, MPI_ANY_SOURCE, i, MPI_COMM_WORLD, &status);
 			solution[status.MPI_TAG] = tempAnsw / mainDet;
 		}
-
-		for (int i = 0; i < n; i++)
-		{
-			for (int j = 0; j < n; j++)
-			{
-				cout << matrix[i * n + j] << " ";
-			}
-			cout << column[i] << endl;
-		}
-		for (int i = 0; i < n; i++)
-		{
-			cout << solution[i] << " ";
-		}
-
+		fprintf(f,"%d %f\n",n,MPI_Wtime()-start_time);
+			
 		delete[] solution;
 	}
 	else
@@ -149,10 +143,9 @@ int main(int argc, char* argv[]) // точка входа
 		MPI_Bcast(column, n, MPI_DOUBLE, 0, MPI_COMM_WORLD);
 		MPI_Bcast(matrix, n * n, MPI_DOUBLE, 0, MPI_COMM_WORLD);
 		double * tempMatrix = new double[n*n];
-		int m = ceil(n / static_cast<double>(size));
-		int begin = num_proc == 1 ? 0 : m*num_proc-1;
+		int m = ceil(n / static_cast<double>(size-1));
+		int begin = num_proc == 1 ? 0 : m*(num_proc-1);
 		int end = begin + m > n ? n : begin + m;
-		cout << m << ": "<< num_proc << " from " << begin << " to " << end<<endl;
 		for(int thisCol = begin;thisCol<end;++thisCol){
 			for (int j = 0; j < n*n; j++) tempMatrix[j] = matrix[j];
 			for (int i = 0; i < n; i++){
@@ -165,6 +158,9 @@ int main(int argc, char* argv[]) // точка входа
 	}
 	delete[] matrix;
 	delete[] column;
+}
+	fclose(f);
 	MPI_Finalize();
+	
 	return 0;
 }
